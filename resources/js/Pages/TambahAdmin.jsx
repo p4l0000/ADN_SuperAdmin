@@ -1,103 +1,38 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { useState } from "react";
+import { useForm } from "@inertiajs/react";
 import { router } from "@inertiajs/react";
 
 export default function TambahAdmin({
     auth,
     divisiOptions = [],
-    errors = {},
     onSubmit,
     onCancel,
+    flash = null,
 }) {
-    const [formData, setFormData] = useState({
+    const { data, setData, post, processing, errors, reset } = useForm({
         namaAdmin: "",
         divisi: "",
     });
 
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [localErrors, setLocalErrors] = useState({});
-
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-        }));
-
-        // Clear local error for this field when user starts typing
-        if (localErrors[name]) {
-            setLocalErrors((prev) => ({
-                ...prev,
-                [name]: null,
-            }));
-        }
+        setData(name, value);
     };
 
     const handleDivisiChange = (selectedDivisiId) => {
-        setFormData((prev) => ({
-            ...prev,
-            divisi: selectedDivisiId,
-        }));
-
-        // Clear divisi error when user selects an option
-        if (localErrors.divisi) {
-            setLocalErrors((prev) => ({
-                ...prev,
-                divisi: null,
-            }));
-        }
-    };
-
-    const validateForm = () => {
-        const newErrors = {};
-
-        if (!formData.namaAdmin.trim()) {
-            newErrors.namaAdmin = "Nama Admin harus diisi";
-        }
-
-        if (!formData.divisi) {
-            newErrors.divisi = "Pilih salah satu divisi";
-        }
-
-        setLocalErrors(newErrors);
-        return Object.keys(newErrors).length === 0;
+        setData("divisi", selectedDivisiId);
     };
 
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        if (!validateForm()) {
-            return;
-        }
-
-        setIsSubmitting(true);
-
-        // If custom onSubmit is provided (for standalone use), use it
-        if (onSubmit && typeof onSubmit === "function") {
-            onSubmit(formData);
-            setIsSubmitting(false);
-            return;
-        }
-
-        // Otherwise, use Inertia router (for Laravel integration)
-        router.post(route("admin.store"), formData, {
-            onSuccess: (response) => {
-                // Reset form on success
-                setFormData({
-                    namaAdmin: "",
-                    divisi: "",
-                });
-                setLocalErrors({});
-
-                // Show success message if needed
-                console.log("Admin berhasil ditambahkan");
+        post(route("admin.store"), {
+            onSuccess: () => {
+                console.log("berhasil");
+                reset();
             },
-            onError: (serverErrors) => {
-                console.error("Validation errors:", serverErrors);
-                setLocalErrors(serverErrors);
-            },
-            onFinish: () => {
-                setIsSubmitting(false);
+            onError: (errors) => {
+                console.log("Validation errors:", errors);
             },
         });
     };
@@ -109,12 +44,8 @@ export default function TambahAdmin({
             return;
         }
 
-        // Otherwise, navigate using Inertia router
         router.visit(route("admin.index"));
     };
-
-    // Combine server errors and local errors
-    const allErrors = { ...errors, ...localErrors };
 
     return (
         <AuthenticatedLayout
@@ -130,11 +61,29 @@ export default function TambahAdmin({
                     <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                         <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
                             <div className="bg-green-100 rounded-2xl p-8 w-full max-w-md shadow-lg">
-                                <h1 className="text-2xl font-bold text-green-900 text-center mb-8">
-                                    Tambah Admin
-                                    <br />
-                                    Divisi
-                                </h1>
+                                <div className="flex items-center justify-between mb-8">
+                                    <h1 className="text-2xl font-bold text-green-900 text-center">
+                                        Tambah Admin
+                                        <br />
+                                        Divisi
+                                    </h1>
+                                    {processing && (
+                                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-900"></div>
+                                    )}
+                                </div>
+
+                                {/* Flash Message */}
+                                {flash && (
+                                    <div
+                                        className={`mb-6 p-4 rounded-md ${
+                                            flash.type === "success"
+                                                ? "bg-green-200 text-green-800 border border-green-300"
+                                                : "bg-red-200 text-red-800 border border-red-300"
+                                        }`}
+                                    >
+                                        {flash.message}
+                                    </div>
+                                )}
 
                                 <form
                                     onSubmit={handleSubmit}
@@ -146,25 +95,43 @@ export default function TambahAdmin({
                                             htmlFor="namaAdmin"
                                             className="block text-lg font-semibold text-green-900 mb-3"
                                         >
-                                            Nama Admin
+                                            Nama Admin{" "}
+                                            <span className="text-red-500">
+                                                *
+                                            </span>
                                         </label>
                                         <input
                                             type="text"
                                             id="namaAdmin"
                                             name="namaAdmin"
-                                            value={formData.namaAdmin}
+                                            value={data.namaAdmin}
                                             onChange={handleInputChange}
                                             placeholder="Nama Lengkap"
+                                            disabled={processing}
                                             className={`w-full px-0 py-2 text-gray-800 bg-transparent border-0 border-b-2 focus:outline-none placeholder-gray-600 transition-colors duration-200 ${
-                                                allErrors.namaAdmin
+                                                errors.namaAdmin
                                                     ? "border-red-500 focus:border-red-600"
                                                     : "border-gray-700 focus:border-green-600"
+                                            } ${
+                                                processing
+                                                    ? "opacity-50 cursor-not-allowed"
+                                                    : ""
                                             }`}
-                                            disabled={isSubmitting}
                                         />
-                                        {allErrors.namaAdmin && (
-                                            <p className="text-red-500 text-sm mt-1">
-                                                {allErrors.namaAdmin}
+                                        {errors.namaAdmin && (
+                                            <p className="text-red-500 text-sm mt-1 flex items-center">
+                                                <svg
+                                                    className="w-4 h-4 mr-1"
+                                                    fill="currentColor"
+                                                    viewBox="0 0 20 20"
+                                                >
+                                                    <path
+                                                        fillRule="evenodd"
+                                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                                        clipRule="evenodd"
+                                                    />
+                                                </svg>
+                                                {errors.namaAdmin}
                                             </p>
                                         )}
                                     </div>
@@ -172,7 +139,10 @@ export default function TambahAdmin({
                                     {/* Divisi Field */}
                                     <div>
                                         <label className="block text-lg font-semibold text-green-900 mb-4">
-                                            Divisi
+                                            Divisi{" "}
+                                            <span className="text-red-500">
+                                                *
+                                            </span>
                                         </label>
                                         <div className="space-y-3">
                                             {divisiOptions
@@ -182,7 +152,7 @@ export default function TambahAdmin({
                                                         key={divisi.id}
                                                         className="flex items-center cursor-pointer hover:bg-green-50 p-2 rounded transition-colors duration-150"
                                                         onClick={() =>
-                                                            !isSubmitting &&
+                                                            !processing &&
                                                             handleDivisiChange(
                                                                 divisi.id
                                                             )
@@ -190,24 +160,24 @@ export default function TambahAdmin({
                                                     >
                                                         <div
                                                             className={`w-5 h-5 rounded-full border-2 border-gray-700 flex items-center justify-center mr-3 transition-all duration-200 ${
-                                                                formData.divisi ===
+                                                                data.divisi ===
                                                                 divisi.id
                                                                     ? "bg-gray-700 shadow-md"
                                                                     : "bg-transparent hover:border-green-600"
                                                             } ${
-                                                                isSubmitting
+                                                                processing
                                                                     ? "opacity-50"
                                                                     : ""
                                                             }`}
                                                         >
-                                                            {formData.divisi ===
+                                                            {data.divisi ===
                                                                 divisi.id && (
                                                                 <div className="w-2 h-2 rounded-full bg-white"></div>
                                                             )}
                                                         </div>
                                                         <span
                                                             className={`text-gray-800 text-lg ${
-                                                                isSubmitting
+                                                                processing
                                                                     ? "opacity-50"
                                                                     : ""
                                                             }`}
@@ -217,9 +187,20 @@ export default function TambahAdmin({
                                                     </label>
                                                 ))}
                                         </div>
-                                        {allErrors.divisi && (
-                                            <p className="text-red-500 text-sm mt-2">
-                                                {allErrors.divisi}
+                                        {errors.divisi && (
+                                            <p className="text-red-500 text-sm mt-2 flex items-center">
+                                                <svg
+                                                    className="w-4 h-4 mr-1"
+                                                    fill="currentColor"
+                                                    viewBox="0 0 20 20"
+                                                >
+                                                    <path
+                                                        fillRule="evenodd"
+                                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                                        clipRule="evenodd"
+                                                    />
+                                                </svg>
+                                                {errors.divisi}
                                             </p>
                                         )}
                                     </div>
@@ -229,37 +210,18 @@ export default function TambahAdmin({
                                         {/* Submit Button */}
                                         <button
                                             type="submit"
-                                            disabled={isSubmitting}
-                                            className={`w-full font-semibold py-3 px-6 rounded-md transition duration-200 transform ${
-                                                isSubmitting
+                                            disabled={processing}
+                                            className={`w-full font-semibold py-3 px-6 rounded-md transition duration-200 transform flex items-center justify-center ${
+                                                processing
                                                     ? "bg-gray-400 cursor-not-allowed opacity-70"
                                                     : "bg-green-600 hover:bg-green-700 hover:scale-105 active:scale-95"
                                             } text-white shadow-lg`}
                                         >
-                                            {isSubmitting ? (
-                                                <span className="flex items-center justify-center">
-                                                    <svg
-                                                        className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                                                        xmlns="http://www.w3.org/2000/svg"
-                                                        fill="none"
-                                                        viewBox="0 0 24 24"
-                                                    >
-                                                        <circle
-                                                            className="opacity-25"
-                                                            cx="12"
-                                                            cy="12"
-                                                            r="10"
-                                                            stroke="currentColor"
-                                                            strokeWidth="4"
-                                                        ></circle>
-                                                        <path
-                                                            className="opacity-75"
-                                                            fill="currentColor"
-                                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                                        ></path>
-                                                    </svg>
+                                            {processing ? (
+                                                <>
+                                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                                                     Menyimpan...
-                                                </span>
+                                                </>
                                             ) : (
                                                 "Simpan"
                                             )}
@@ -271,10 +233,10 @@ export default function TambahAdmin({
                                         <button
                                             type="button"
                                             onClick={handleCancel}
-                                            disabled={isSubmitting}
+                                            disabled={processing}
                                             className={`w-full font-semibold py-2 px-6 rounded-md transition duration-200 text-white transform ${
-                                                isSubmitting
-                                                    ? "bg-gray-300 cursor-not-allowed opacity-70"
+                                                processing
+                                                    ? "bg-gray-300 cursor-not-allowed opacity-70 text-gray-500"
                                                     : "bg-gray-400 hover:bg-gray-500 hover:scale-105 active:scale-95"
                                             } shadow-md`}
                                         >
@@ -284,9 +246,9 @@ export default function TambahAdmin({
                                 </form>
 
                                 {/* Display general server errors */}
-                                {allErrors.error && (
+                                {errors.error && (
                                     <div className="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                                        {allErrors.error}
+                                        {errors.error}
                                     </div>
                                 )}
                             </div>

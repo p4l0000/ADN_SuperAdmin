@@ -177,10 +177,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </NavLink>
 
                                 <NavLink
-                                    href={route("member")}
+                                    href={route("member.index")}
                                     active={
-                                        route().current("member") ||
-                                        route().current("member.add")
+                                        route().current("member.index") ||
+                                        route().current("member.create")
                                     }
                                 >
                                     <div className="flex items-center px-4 py-3 hover:bg-gray-100">

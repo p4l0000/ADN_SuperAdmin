@@ -2,26 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Admin;
+use App\Models\Member;
 use App\Models\Divisi;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 
-class AdminController extends Controller
+class MemberController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $admins = Admin::with('divisi')
-                      ->latest()
-                      ->paginate(10);
+        $members = Member::with('divisi')->latest()->paginate(10);
         
-        return Inertia::render('Admin', [
-            'admins' => $admins,
+        return Inertia::render('Member', [
+            'members' => $members,
             'flash' => session('flash')
         ]);
     }
@@ -36,11 +34,11 @@ class AdminController extends Controller
                               ->map(function ($divisi) {
                                   return [
                                       'id' => $divisi->id,
-                                      'nama_divisi' => $divisi->nama_divisi,
+                                      'nama_divisi' => $divisi->nama_divisi
                                   ];
                               });
 
-        return Inertia::render('TambahAdmin', [
+        return Inertia::render('TambahMember', [
             'divisiOptions' => $divisiOptions
         ]);
     }
@@ -52,26 +50,30 @@ class AdminController extends Controller
     {
         try {
             $validated = $request->validate([
-                'namaAdmin' => 'required|string|max:255',
+                'namaMember' => 'required|string|max:255',
                 'divisi' => 'required|integer|exists:divisis,id',
+                'status' => 'required|in:Aktif,Non Aktif',
             ], [
-                'namaAdmin.required' => 'Nama Admin harus diisi',
-                'namaAdmin.max' => 'Nama Admin maksimal 255 karakter',
+                'namaMember.required' => 'Nama Member harus diisi',
+                'namaMember.max' => 'Nama Member maksimal 255 karakter',
                 'divisi.required' => 'Divisi harus dipilih',
                 'divisi.integer' => 'Divisi harus berupa angka',
                 'divisi.exists' => 'Divisi tidak valid',
+                'status.required' => 'Status harus dipilih',
+                'status.in' => 'Status harus Aktif atau Non Aktif',
             ]);
 
-            $admin = new Admin();
-            $admin->nama_admin = $validated['namaAdmin'];
-            $admin->divisi_id = $validated['divisi'];
+            $member = new Member();
+            $member->nama_member = $validated['namaMember'];
+            $member->divisi_id = $validated['divisi'];
+            $member->status = $validated['status'];
             
-            $saved = $admin->save();
+            $saved = $member->save();
             
-            if ($saved) {
-                return redirect()->route('admin.index')->with('flash', [
+            if ($saved && $member->id) {
+                return redirect()->route('member.index')->with('flash', [
                     'type' => 'success',
-                    'message' => 'Admin berhasil ditambahkan!'
+                    'message' => 'Member berhasil ditambahkan!'
                 ]);
             } else {
                 throw new \Exception('Data tidak berhasil disimpan');
@@ -89,7 +91,7 @@ class AdminController extends Controller
             ]);
             return redirect()->back()->with('flash', [
                 'type' => 'error',
-                'message' => 'Terjadi kesalahan saat menyimpan data admin: ' . $e->getMessage()
+                'message' => 'Terjadi kesalahan saat menyimpan data member: ' . $e->getMessage()
             ])->withInput();
         }
     }
@@ -97,21 +99,21 @@ class AdminController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Admin $admin)
+    public function show(Member $member)
     {
-        $admin->load('divisi');
+        $member->load('divisi');
         
-        return Inertia::render('Admin/Show', [
-            'admin' => $admin
+        return Inertia::render('Member/Show', [
+            'member' => $member
         ]);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Admin $admin)
+    public function edit(Member $member)
     {
-        $admin->load('divisi');
+        $member->load('divisi');
         
         $divisiOptions = Divisi::orderBy('nama_divisi')
                               ->get()
@@ -122,8 +124,8 @@ class AdminController extends Controller
                                   ];
                               });
 
-        return Inertia::render('Admin/Edit', [
-            'admin' => $admin,
+        return Inertia::render('Member/Edit', [
+            'member' => $member,
             'divisiOptions' => $divisiOptions
         ]);
     }
@@ -131,28 +133,32 @@ class AdminController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Admin $admin): RedirectResponse
+    public function update(Request $request, Member $member): RedirectResponse
     {
         try {
             $validated = $request->validate([
-                'namaAdmin' => 'required|string|max:255',
+                'namaMember' => 'required|string|max:255',
                 'divisi' => 'required|integer|exists:divisis,id',
+                'status' => 'required|in:Aktif,Non Aktif',
             ], [
-                'namaAdmin.required' => 'Nama Admin harus diisi',
-                'namaAdmin.max' => 'Nama Admin maksimal 255 karakter',
+                'namaMember.required' => 'Nama Member harus diisi',
+                'namaMember.max' => 'Nama Member maksimal 255 karakter',
                 'divisi.required' => 'Divisi harus dipilih',
                 'divisi.integer' => 'Divisi harus berupa angka',
                 'divisi.exists' => 'Divisi tidak valid',
+                'status.required' => 'Status harus dipilih',
+                'status.in' => 'Status harus Aktif atau Non Aktif',
             ]);
 
-            $admin->update([
-                'nama_admin' => $validated['namaAdmin'],
+            $member->update([
+                'nama_member' => $validated['namaMember'],
                 'divisi_id' => $validated['divisi'],
+                'status' => $validated['status'],
             ]);
 
-            return redirect()->route('admin.index')->with('flash', [
+            return redirect()->route('member.index')->with('flash', [
                 'type' => 'success',
-                'message' => 'Admin berhasil diperbarui!'
+                'message' => 'Member berhasil diperbarui!'
             ]);
 
         } catch (ValidationException $e) {
@@ -162,7 +168,7 @@ class AdminController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('flash', [
                 'type' => 'error',
-                'message' => 'Terjadi kesalahan saat memperbarui data admin.'
+                'message' => 'Terjadi kesalahan saat memperbarui data member.'
             ])->withInput();
         }
     }
@@ -170,20 +176,20 @@ class AdminController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Admin $admin): RedirectResponse
+    public function destroy(Member $member): RedirectResponse
     {
         try {
-            $admin->delete();
+            $member->delete();
 
-            return redirect()->route('admin.index')->with('flash', [
+            return redirect()->route('member.index')->with('flash', [
                 'type' => 'success',
-                'message' => 'Admin berhasil dihapus!'
+                'message' => 'Member berhasil dihapus!'
             ]);
 
         } catch (\Exception $e) {
             return redirect()->back()->with('flash', [
                 'type' => 'error',
-                'message' => 'Terjadi kesalahan saat menghapus admin.'
+                'message' => 'Terjadi kesalahan saat menghapus member.'
             ]);
         }
     }

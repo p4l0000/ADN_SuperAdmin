@@ -32,4 +32,9 @@ class Divisi extends Model
     {
         return $this->hasMany(Admin::class, 'divisi_id');
     }
+
+    public function members(): HasMany
+    {
+        return $this->hasMany(Member::class, 'divisi_id');
+    }
 }

@@ -61,20 +61,4 @@ class Admin extends Model
     {
         return $this->belongsTo(Divisi::class, 'divisi_id');
     }
-
-    /**
-     * Scope a query to search by name.
-     */
-    public function scopeSearchByName($query, $name)
-    {
-        return $query->where('nama_admin', 'LIKE', "%{$name}%");
-    }
-
-    /**
-     * Get the admin's full display name with divisi.
-     */
-    public function getFullDisplayNameAttribute()
-    {
-        return $this->nama_admin . ' - ' . $this->divisi->nama_divisi;
-    }
 }
