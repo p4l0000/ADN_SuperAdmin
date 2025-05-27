@@ -18,7 +18,7 @@ class MemberController extends Controller
     {
         $members = Member::with('divisi')->latest()->paginate(10);
         
-        return Inertia::render('Member', [
+        return Inertia::render('Member/Member', [
             'members' => $members,
             'flash' => session('flash')
         ]);
@@ -38,7 +38,7 @@ class MemberController extends Controller
                                   ];
                               });
 
-        return Inertia::render('TambahMember', [
+        return Inertia::render('Member/TambahMember', [
             'divisiOptions' => $divisiOptions
         ]);
     }

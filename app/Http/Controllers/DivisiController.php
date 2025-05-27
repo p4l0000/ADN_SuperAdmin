@@ -17,7 +17,7 @@ class DivisiController extends Controller
     {
         $divisi = Divisi::withCount('admins')->get();
         
-        return Inertia::render('Divisi', [
+        return Inertia::render('Divisi/Divisi', [
             'divisi' => $divisi,
             'flash' => session('flash')
         ]);
@@ -28,7 +28,7 @@ class DivisiController extends Controller
      */
     public function create()
     {
-        return Inertia::render('TambahDivisi');
+        return Inertia::render('Divisi/TambahDivisi');
     }
 
     /**

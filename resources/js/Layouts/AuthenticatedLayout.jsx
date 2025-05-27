@@ -190,10 +190,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </NavLink>
 
                                 <NavLink
-                                    href={route("berita")}
+                                    href={route("berita.index")}
                                     active={
-                                        route().current("berita") ||
-                                        route().current("berita.add")
+                                        route().current("berita.index") ||
+                                        route().current("berita.create")
                                     }
                                 >
                                     <div className="flex items-center px-4 py-3 hover:bg-gray-100">

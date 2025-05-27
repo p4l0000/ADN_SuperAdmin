@@ -20,7 +20,7 @@ class AdminController extends Controller
                       ->latest()
                       ->paginate(10);
         
-        return Inertia::render('Admin', [
+        return Inertia::render('Admin/Admin', [
             'admins' => $admins,
             'flash' => session('flash')
         ]);
@@ -40,7 +40,7 @@ class AdminController extends Controller
                                   ];
                               });
 
-        return Inertia::render('TambahAdmin', [
+        return Inertia::render('Admin/TambahAdmin', [
             'divisiOptions' => $divisiOptions
         ]);
     }
