@@ -2,12 +2,14 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { useState, useEffect } from "react";
 import { router } from "@inertiajs/react";
 
-export default function Berita({ berita = [], flash }) {
-    const [searchQuery, setSearchQuery] = useState("");
+export default function Berita({ berita = [], flash, search = "" }) {
+    const [searchQuery, setSearchQuery] = useState(search);
+    const [isLoading, setIsLoading] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [itemToDelete, setItemToDelete] = useState(null);
     const [flashMessage, setFlashMessage] = useState(flash);
 
+    // Auto hide flash message after 5 seconds
     useEffect(() => {
         if (flashMessage) {
             const timer = setTimeout(() => {
@@ -17,29 +19,38 @@ export default function Berita({ berita = [], flash }) {
         }
     }, [flashMessage]);
 
-    // Filter data based on search query
-    const filteredData = berita.filter((item) => {
-        if (!searchQuery) return true;
+    // Handle search with debounce
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (searchQuery !== search) {
+                handleSearch();
+            }
+        }, 500); // 500ms debounce
 
-        return (
-            item.judul_berita
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase()) ||
-            item.deskripsi_judul
-                .toLowerCase()
-                .includes(searchQuery.toLowerCase()) ||
-            (item.created_at &&
-                new Date(item.created_at)
-                    .toLocaleDateString("id-ID", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                    })
-                    .toLowerCase()
-                    .includes(searchQuery.toLowerCase()))
-        );
-    });
+        return () => clearTimeout(timeoutId);
+    }, [searchQuery]);
+
+    const handleSearch = () => {
+        setIsLoading(true);
+
+        // Build the URL with search parameters
+        const params = {};
+        if (searchQuery.trim()) {
+            params.q = searchQuery.trim();
+        }
+
+        router.get(route("berita.index"), params, {
+            preserveState: false,
+            preserveScroll: false,
+            onFinish: () => setIsLoading(false),
+            onError: () => setIsLoading(false),
+        });
+    };
+
+    const handleClearSearch = () => {
+        setSearchQuery("");
+        // This will trigger the useEffect and perform a search with empty query
+    };
 
     const handleAdd = () => {
         router.visit(route("berita.create"));
@@ -118,182 +129,288 @@ export default function Berita({ berita = [], flash }) {
 
     return (
         <AuthenticatedLayout>
-            <div className="bg-green-50 rounded-lg shadow-md max-w-6xl mx-auto">
-                {/* Flash Message */}
-                {flashMessage && (
-                    <div
-                        className={`mx-4 mt-4 p-4 rounded-md ${
-                            flashMessage.type === "success"
-                                ? "bg-green-100 border border-green-400 text-green-700"
-                                : "bg-red-100 border border-red-400 text-red-700"
-                        }`}
-                    >
-                        <div className="flex justify-between items-center">
-                            <span>{flashMessage.message}</span>
-                            <button
-                                onClick={() => setFlashMessage(null)}
-                                className="ml-4 text-lg font-bold"
+            <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                    <div className="bg-green-50 rounded-lg shadow-md max-w-6xl mx-auto">
+                        {/* Flash Message */}
+                        {flashMessage && (
+                            <div
+                                className={`mx-4 mt-4 p-4 rounded-md ${
+                                    flashMessage.type === "success"
+                                        ? "bg-green-100 border border-green-400 text-green-700"
+                                        : "bg-red-100 border border-red-400 text-red-700"
+                                }`}
                             >
-                                x
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* Header with title and actions */}
-                <div className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center">
-                    <h1 className="text-2xl font-bold text-green-900 mb-4 md:mb-0">
-                        Daftar Berita
-                    </h1>
-
-                    <div className="flex flex-col md:flex-row w-full md:w-auto gap-3">
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder="Search"
-                                className="border border-gray-300 rounded-md pl-3 pr-10 py-2 w-full focus:outline-none focus:ring-1 focus:ring-green-500"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                            <svg
-                                className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400"
-                                fill="none"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                        </div>
-
-                        <button
-                            onClick={handleAdd}
-                            className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition duration-200"
-                        >
-                            Tambah Berita
-                        </button>
-                    </div>
-                </div>
-
-                {/* Table separator line */}
-                <div className="border-t border-gray-300"></div>
-
-                {/* Table section */}
-                <div className="overflow-x-auto">
-                    <table className="min-w-full bg-white">
-                        <thead>
-                            <tr className="bg-gray-50 border-b border-gray-200">
-                                <th className="py-3 px-6 text-left font-medium text-gray-700">
-                                    Sampul
-                                </th>
-                                <th className="py-3 px-6 text-left font-medium text-gray-700">
-                                    Judul Berita
-                                </th>
-                                <th className="py-3 px-6 text-left font-medium text-gray-700">
-                                    Tanggal
-                                </th>
-                                <th className="py-3 px-6 text-left font-medium text-gray-700">
-                                    Deskripsi
-                                </th>
-                                <th className="py-3 px-6 text-center font-medium text-gray-700">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredData.length > 0 ? (
-                                filteredData.map((item) => (
-                                    <tr
-                                        key={item.id}
-                                        className="border-b border-gray-200 hover:bg-gray-50"
+                                <div className="flex justify-between items-center">
+                                    <span>{flashMessage.message}</span>
+                                    <button
+                                        onClick={() => setFlashMessage(null)}
+                                        className="ml-4 text-lg font-bold"
                                     >
-                                        <td className="py-3 px-6">
-                                            {renderImage(item)}
-                                            <div
-                                                className="bg-gray-200 w-24 h-16 items-center justify-center rounded"
-                                                style={{ display: "none" }}
+                                        ×
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Header with title and actions */}
+                        <div className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center">
+                            <h1 className="text-2xl font-bold text-green-900 mb-4 md:mb-0">
+                                Daftar Berita
+                            </h1>
+
+                            <div className="flex flex-col md:flex-row w-full md:w-auto gap-3">
+                                <div className="relative">
+                                    <input
+                                        type="text"
+                                        placeholder="Cari judul berita atau deskripsi..."
+                                        className="border border-gray-300 rounded-md pl-3 pr-20 py-2 w-full md:w-64 focus:outline-none focus:ring-1 focus:ring-green-500"
+                                        value={searchQuery}
+                                        onChange={(e) =>
+                                            setSearchQuery(e.target.value)
+                                        }
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") {
+                                                handleSearch();
+                                            }
+                                        }}
+                                    />
+
+                                    {/* Search/Loading Icon */}
+                                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center gap-1">
+                                        {searchQuery && (
+                                            <button
+                                                onClick={handleClearSearch}
+                                                className="text-gray-400 hover:text-gray-600 p-1"
+                                                title="Clear search"
                                             >
-                                                <span className="text-gray-500 text-xs">
-                                                    No Image
-                                                </span>
-                                            </div>
-                                        </td>
-                                        <td className="py-3 px-6 text-gray-900">
-                                            <div className="font-medium">
-                                                {item.judul_berita}
-                                            </div>
-                                        </td>
-                                        <td className="py-3 px-6 text-gray-900">
-                                            {formatDate(item.created_at)}
-                                        </td>
-                                        <td className="py-3 px-6 text-gray-900">
-                                            <div title={item.deskripsi_judul}>
-                                                {truncateText(
-                                                    item.deskripsi_judul,
-                                                    100
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="py-3 px-6">
-                                            <div className="flex justify-center space-x-3">
-                                                <button
-                                                    onClick={() =>
-                                                        handleEdit(item)
-                                                    }
-                                                    className="text-gray-500 hover:text-blue-600 transition-colors duration-200"
-                                                    title="Edit Berita"
+                                                <svg
+                                                    className="h-4 w-4"
+                                                    fill="none"
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth="2"
+                                                    viewBox="0 0 24 24"
+                                                    stroke="currentColor"
                                                 >
-                                                    <svg
-                                                        className="h-5 w-5"
-                                                        fill="none"
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth="2"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                                    </svg>
-                                                </button>
-                                                <button
-                                                    onClick={() =>
-                                                        handleDelete(item)
-                                                    }
-                                                    className="text-gray-500 hover:text-red-600 transition-colors duration-200"
-                                                    title="Delete Berita"
-                                                >
-                                                    <svg
-                                                        className="h-5 w-5"
-                                                        fill="none"
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        strokeWidth="2"
-                                                        viewBox="0 0 24 24"
-                                                        stroke="currentColor"
-                                                    >
-                                                        <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                                    </svg>
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td
-                                        colSpan="5"
-                                        className="py-8 px-6 text-center text-gray-500"
+                                                    <path d="M6 18L18 6M6 6l12 12"></path>
+                                                </svg>
+                                            </button>
+                                        )}
+                                        <svg
+                                            className={`h-4 w-4 ${
+                                                isLoading
+                                                    ? "animate-spin text-green-500"
+                                                    : "text-gray-400"
+                                            }`}
+                                            fill="none"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth="2"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            {isLoading ? (
+                                                <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            ) : (
+                                                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                            )}
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={handleAdd}
+                                    className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md transition duration-200 flex items-center gap-2"
+                                >
+                                    <svg
+                                        className="w-4 h-4"
+                                        fill="none"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
                                     >
-                                        {searchQuery
-                                            ? "Tidak ada berita yang sesuai dengan pencarian"
-                                            : "Belum ada data berita"}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                        <path d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    Tambah Berita
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Search info */}
+                        {searchQuery && (
+                            <div className="px-4 pb-2">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm text-gray-600">
+                                        Menampilkan hasil pencarian untuk:{" "}
+                                        <strong>"{searchQuery}"</strong>
+                                        {berita?.length === 0 &&
+                                            " - Tidak ada hasil ditemukan"}
+                                    </p>
+                                    <button
+                                        onClick={handleClearSearch}
+                                        className="text-sm text-green-600 hover:text-green-800 underline"
+                                    >
+                                        Lihat semua data
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Results count */}
+                        {berita && (
+                            <div className="px-4 pb-2">
+                                <p className="text-sm text-gray-500">
+                                    Total: {berita.length} berita
+                                    {searchQuery &&
+                                        ` (dari pencarian "${searchQuery}")`}
+                                </p>
+                            </div>
+                        )}
+
+                        {/* Table separator line */}
+                        <div className="border-t border-gray-300"></div>
+
+                        {/* Table section */}
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full bg-white">
+                                <thead>
+                                    <tr className="bg-gray-50 border-b border-gray-200">
+                                        <th className="py-3 px-6 text-left font-medium text-gray-700">
+                                            Sampul
+                                        </th>
+                                        <th className="py-3 px-6 text-left font-medium text-gray-700">
+                                            Judul Berita
+                                        </th>
+                                        <th className="py-3 px-6 text-left font-medium text-gray-700">
+                                            Tanggal
+                                        </th>
+                                        <th className="py-3 px-6 text-left font-medium text-gray-700">
+                                            Deskripsi
+                                        </th>
+                                        <th className="py-3 px-6 text-center font-medium text-gray-700">
+                                            Actions
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {berita && berita.length > 0 ? (
+                                        berita.map((item) => (
+                                            <tr
+                                                key={item.id}
+                                                className="border-b border-gray-200 hover:bg-gray-50"
+                                            >
+                                                <td className="py-3 px-6">
+                                                    {renderImage(item)}
+                                                    <div
+                                                        className="bg-gray-200 w-24 h-16 items-center justify-center rounded"
+                                                        style={{
+                                                            display: "none",
+                                                        }}
+                                                    >
+                                                        <span className="text-gray-500 text-xs">
+                                                            No Image
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-6 text-gray-900">
+                                                    <div className="font-medium">
+                                                        {item.judul_berita}
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-6 text-gray-900">
+                                                    {formatDate(
+                                                        item.created_at
+                                                    )}
+                                                </td>
+                                                <td className="py-3 px-6 text-gray-900">
+                                                    <div
+                                                        title={
+                                                            item.deskripsi_judul
+                                                        }
+                                                    >
+                                                        {truncateText(
+                                                            item.deskripsi_judul,
+                                                            100
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-6">
+                                                    <div className="flex justify-center space-x-3">
+                                                        <button
+                                                            onClick={() =>
+                                                                handleEdit(item)
+                                                            }
+                                                            className="text-gray-500 hover:text-blue-600 transition-colors duration-200"
+                                                            title="Edit Berita"
+                                                        >
+                                                            <svg
+                                                                className="h-5 w-5"
+                                                                fill="none"
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth="2"
+                                                                viewBox="0 0 24 24"
+                                                                stroke="currentColor"
+                                                            >
+                                                                <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                            </svg>
+                                                        </button>
+                                                        <button
+                                                            onClick={() =>
+                                                                handleDelete(
+                                                                    item
+                                                                )
+                                                            }
+                                                            className="text-gray-500 hover:text-red-600 transition-colors duration-200"
+                                                            title="Delete Berita"
+                                                        >
+                                                            <svg
+                                                                className="h-5 w-5"
+                                                                fill="none"
+                                                                strokeLinecap="round"
+                                                                strokeLinejoin="round"
+                                                                strokeWidth="2"
+                                                                viewBox="0 0 24 24"
+                                                                stroke="currentColor"
+                                                            >
+                                                                <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                                            </svg>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    ) : (
+                                        <tr>
+                                            <td
+                                                colSpan="5"
+                                                className="py-8 px-6 text-center text-gray-500"
+                                            >
+                                                {searchQuery
+                                                    ? "Tidak ada berita yang sesuai dengan pencarian."
+                                                    : "Belum ada data berita."}
+                                                {searchQuery && (
+                                                    <div className="mt-2">
+                                                        <button
+                                                            onClick={
+                                                                handleClearSearch
+                                                            }
+                                                            className="text-green-600 hover:text-green-800 underline text-sm"
+                                                        >
+                                                            Lihat semua data
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
 

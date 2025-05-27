@@ -15,15 +15,27 @@ class BeritaController extends Controller
     /**
      * Display a listing of the berita.
      */
-    public function index()
-    {
-        $berita = Berita::latest()->get();
-        
-        return Inertia::render('Berita/Berita', [
-            'berita' => $berita,
-            'flash' => session('flash')
-        ]);
+    public function index(Request $request)
+{
+    $query = Berita::query();
+    
+    // Handle search
+    $search = $request->get('q', '');
+    if (!empty($search)) {
+        $query->where(function($q) use ($search) {
+            $q->where('judul_berita', 'LIKE', '%' . $search . '%')
+              ->orWhere('deskripsi_judul', 'LIKE', '%' . $search . '%');
+        });
     }
+    
+    $berita = $query->latest()->get();
+    
+    return Inertia::render('Berita/Berita', [
+        'berita' => $berita,
+        'flash' => session('flash'),
+        'search' => $search
+    ]);
+}
 
     /**
      * Show the form for creating a new berita.
@@ -114,7 +126,7 @@ class BeritaController extends Controller
      */
     public function edit(Berita $berita)
     {
-        return Inertia::render('Berita/Edit', [
+        return Inertia::render('Berita/EditBerita', [
             'berita' => $berita
         ]);
     }

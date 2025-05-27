@@ -14,15 +14,31 @@ class AdminController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $admins = Admin::with('divisi')
-                      ->latest()
-                      ->paginate(10);
+        $query = Admin::with('divisi')->latest();
+        
+        $searchQuery = $request->get('q');
+        
+        if ($searchQuery) {
+            // Search across all relevant fields
+            $query->where(function ($q) use ($searchQuery) {
+                $q->where('id', 'like', '%' . $searchQuery . '%')
+                  ->orWhere('nama_admin', 'like', '%' . $searchQuery . '%')
+                  ->orWhereHas('divisi', function ($divisiQuery) use ($searchQuery) {
+                      $divisiQuery->where('nama_divisi', 'like', '%' . $searchQuery . '%');
+                  });
+            });
+            
+            $admins = $query->paginate(50); // Increase limit for search results
+        } else {
+            $admins = $query->paginate(10);
+        }
         
         return Inertia::render('Admin/Admin', [
             'admins' => $admins,
-            'flash' => session('flash')
+            'flash' => session('flash'),
+            'search' => $searchQuery
         ]);
     }
 
@@ -122,7 +138,7 @@ class AdminController extends Controller
                                   ];
                               });
 
-        return Inertia::render('Admin/Edit', [
+        return Inertia::render('Admin/EditAdmin', [
             'admin' => $admin,
             'divisiOptions' => $divisiOptions
         ]);

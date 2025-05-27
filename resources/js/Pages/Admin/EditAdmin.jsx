@@ -2,16 +2,17 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { useForm } from "@inertiajs/react";
 import { router } from "@inertiajs/react";
 
-export default function TambahAdmin({
+export default function EditAdmin({
     auth,
+    admin,
     divisiOptions = [],
     onSubmit,
     onCancel,
     flash = null,
 }) {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        namaAdmin: "",
-        divisi: "",
+    const { data, setData, put, processing, errors, reset } = useForm({
+        namaAdmin: admin?.nama_admin || "",
+        divisi: admin?.divisi_id || "",
     });
 
     const handleInputChange = (e) => {
@@ -26,10 +27,9 @@ export default function TambahAdmin({
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        post(route("admin.store"), {
+        put(route("admin.update", admin.id), {
             onSuccess: () => {
                 console.log("berhasil");
-                reset();
             },
             onError: (errors) => {
                 console.log("Validation errors:", errors);
@@ -52,22 +52,20 @@ export default function TambahAdmin({
             user={auth?.user}
             header={
                 <h2 className="font-semibold text-xl text-gray-800 leading-tight">
-                    Tambah Admin Divisi
+                    Edit Admin Divisi
                 </h2>
             }
         >
             <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <div className="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-                        <div className="bg-green-100 rounded-2xl p-8 w-full max-w-md shadow-lg">
+                        <div className="bg-blue-100 rounded-2xl p-8 w-full max-w-md shadow-lg">
                             <div className="flex items-center justify-between mb-8">
-                                <h1 className="text-2xl font-bold text-green-900 text-center">
-                                    Tambah Admin
-                                    <br />
-                                    Divisi
+                                <h1 className="text-2xl font-bold text-blue-900 text-center">
+                                    Edit Admin Divisi
                                 </h1>
                                 {processing && (
-                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-900"></div>
+                                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-900"></div>
                                 )}
                             </div>
 
@@ -89,7 +87,7 @@ export default function TambahAdmin({
                                 <div>
                                     <label
                                         htmlFor="namaAdmin"
-                                        className="block text-lg font-semibold text-green-900 mb-3"
+                                        className="block text-lg font-semibold text-blue-900 mb-3"
                                     >
                                         Nama Admin{" "}
                                         <span className="text-red-500">*</span>
@@ -105,7 +103,7 @@ export default function TambahAdmin({
                                         className={`w-full px-0 py-2 text-gray-800 bg-transparent border-0 border-b-2 focus:outline-none placeholder-gray-600 transition-colors duration-200 ${
                                             errors.namaAdmin
                                                 ? "border-red-500 focus:border-red-600"
-                                                : "border-gray-700 focus:border-green-600"
+                                                : "border-gray-700 focus:border-blue-600"
                                         } ${
                                             processing
                                                 ? "opacity-50 cursor-not-allowed"
@@ -132,7 +130,7 @@ export default function TambahAdmin({
 
                                 {/* Divisi Field */}
                                 <div>
-                                    <label className="block text-lg font-semibold text-green-900 mb-4">
+                                    <label className="block text-lg font-semibold text-blue-900 mb-4">
                                         Divisi{" "}
                                         <span className="text-red-500">*</span>
                                     </label>
@@ -142,7 +140,7 @@ export default function TambahAdmin({
                                             .map((divisi, index) => (
                                                 <label
                                                     key={divisi.id}
-                                                    className="flex items-center cursor-pointer hover:bg-green-50 p-2 rounded transition-colors duration-150"
+                                                    className="flex items-center cursor-pointer hover:bg-blue-50 p-2 rounded transition-colors duration-150"
                                                     onClick={() =>
                                                         !processing &&
                                                         handleDivisiChange(
@@ -155,7 +153,7 @@ export default function TambahAdmin({
                                                             data.divisi ===
                                                             divisi.id
                                                                 ? "bg-gray-700 shadow-md"
-                                                                : "bg-transparent hover:border-green-600"
+                                                                : "bg-transparent hover:border-blue-600"
                                                         } ${
                                                             processing
                                                                 ? "opacity-50"
@@ -199,23 +197,23 @@ export default function TambahAdmin({
 
                                 {/* Action Buttons */}
                                 <div className="pt-8">
-                                    {/* Submit Button */}
+                                    {/* Update Button */}
                                     <button
                                         type="submit"
                                         disabled={processing}
                                         className={`w-full font-semibold py-3 px-6 rounded-md transition duration-200 transform flex items-center justify-center ${
                                             processing
                                                 ? "bg-gray-400 cursor-not-allowed opacity-70"
-                                                : "bg-green-600 hover:bg-green-700 hover:scale-105 active:scale-95"
+                                                : "bg-blue-600 hover:bg-blue-700 hover:scale-105 active:scale-95"
                                         } text-white shadow-lg`}
                                     >
                                         {processing ? (
                                             <>
                                                 <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                                Menyimpan...
+                                                Memperbarui...
                                             </>
                                         ) : (
-                                            "Simpan"
+                                            "Perbarui"
                                         )}
                                     </button>
                                 </div>

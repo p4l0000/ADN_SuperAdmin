@@ -1,12 +1,11 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { useState } from "react";
 import { Head, useForm } from "@inertiajs/react";
 
-export default function TambahMember({ divisiOptions = [], auth }) {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        namaMember: "",
-        divisi: "",
-        status: "",
+export default function EditMember({ member, divisiOptions = [], auth }) {
+    const { data, setData, put, processing, errors, reset } = useForm({
+        namaMember: member?.nama_member || "",
+        divisi: member?.divisi_id || "",
+        status: member?.status || "",
     });
 
     const statusOptions = ["Aktif", "Non Aktif"];
@@ -27,11 +26,15 @@ export default function TambahMember({ divisiOptions = [], auth }) {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        post(route("member.store"), {
+        put(route("member.update", member.id), {
             onSuccess: () => {
-                reset();
+                // Data will be redirected by controller
             },
         });
+    };
+
+    const handleCancel = () => {
+        window.history.back();
     };
 
     return (
@@ -39,16 +42,16 @@ export default function TambahMember({ divisiOptions = [], auth }) {
             user={auth.user}
             header={
                 <h2 className="font-semibold text-xl text-gray-800 leading-tight">
-                    Tambah Member Divisi
+                    Edit Member
                 </h2>
             }
         >
-            <Head title="Tambah Member" />
+            <Head title="Edit Member" />
 
             <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-                <div className="bg-green-100 rounded-2xl p-8 w-full max-w-md shadow-lg">
-                    <h1 className="text-2xl font-bold text-green-900 text-center mb-8">
-                        Divisi Member
+                <div className="bg-blue-100 rounded-2xl p-8 w-full max-w-md shadow-lg">
+                    <h1 className="text-2xl font-bold text-blue-900 text-center mb-8">
+                        Edit Member
                     </h1>
 
                     <form onSubmit={handleSubmit} className="space-y-6">
@@ -56,7 +59,7 @@ export default function TambahMember({ divisiOptions = [], auth }) {
                         <div>
                             <label
                                 htmlFor="namaMember"
-                                className="block text-lg font-semibold text-green-900 mb-3"
+                                className="block text-base font-semibold text-blue-900 mb-2"
                             >
                                 Nama Member
                             </label>
@@ -67,21 +70,25 @@ export default function TambahMember({ divisiOptions = [], auth }) {
                                 value={data.namaMember}
                                 onChange={handleInputChange}
                                 placeholder="Rizky Budhiderma"
-                                className="w-full px-0 py-2 text-gray-800 bg-transparent border-0 border-b-2 border-gray-700 focus:outline-none focus:border-green-600 placeholder-gray-500"
+                                className={`w-full px-0 py-2 text-gray-800 bg-transparent border-0 border-b-2 focus:outline-none placeholder-gray-600 text-sm ${
+                                    errors.namaMember
+                                        ? "border-red-500 focus:border-red-600"
+                                        : "border-gray-700 focus:border-blue-600"
+                                }`}
                             />
                             {errors.namaMember && (
-                                <div className="text-red-600 text-sm mt-1">
+                                <p className="text-red-500 text-sm mt-1">
                                     {errors.namaMember}
-                                </div>
+                                </p>
                             )}
                         </div>
 
                         {/* Divisi Field */}
                         <div>
-                            <label className="block text-lg font-semibold text-green-900 mb-4">
+                            <label className="block text-base font-semibold text-blue-900 mb-3">
                                 Divisi
                             </label>
-                            <div className="space-y-3">
+                            <div className="space-y-2">
                                 {divisiOptions.map((divisi) => (
                                     <label
                                         key={divisi.id}
@@ -91,35 +98,35 @@ export default function TambahMember({ divisiOptions = [], auth }) {
                                         }
                                     >
                                         <div
-                                            className={`w-5 h-5 rounded-full border-2 border-gray-700 flex items-center justify-center mr-3 ${
+                                            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mr-3 ${
                                                 data.divisi === divisi.id
-                                                    ? "bg-gray-700"
-                                                    : "bg-transparent"
+                                                    ? "bg-blue-600 border-blue-600"
+                                                    : "bg-transparent border-gray-700"
                                             }`}
                                         >
                                             {data.divisi === divisi.id && (
                                                 <div className="w-2 h-2 rounded-full bg-white"></div>
                                             )}
                                         </div>
-                                        <span className="text-gray-800 text-lg">
+                                        <span className="text-gray-800 text-sm">
                                             {divisi.nama_divisi}
                                         </span>
                                     </label>
                                 ))}
                             </div>
                             {errors.divisi && (
-                                <div className="text-red-600 text-sm mt-1">
+                                <p className="text-red-500 text-sm mt-1">
                                     {errors.divisi}
-                                </div>
+                                </p>
                             )}
                         </div>
 
                         {/* Status Field */}
                         <div>
-                            <label className="block text-lg font-semibold text-green-900 mb-4">
+                            <label className="block text-base font-semibold text-blue-900 mb-3">
                                 Status
                             </label>
-                            <div className="space-y-3">
+                            <div className="space-y-2">
                                 {statusOptions.map((status, index) => (
                                     <label
                                         key={index}
@@ -129,37 +136,41 @@ export default function TambahMember({ divisiOptions = [], auth }) {
                                         }
                                     >
                                         <div
-                                            className={`w-5 h-5 rounded-full border-2 border-gray-700 flex items-center justify-center mr-3 ${
+                                            className={`w-4 h-4 rounded-full border-2 flex items-center justify-center mr-3 ${
                                                 data.status === status
-                                                    ? "bg-gray-700"
-                                                    : "bg-transparent"
+                                                    ? "bg-blue-600 border-blue-600"
+                                                    : "bg-transparent border-gray-700"
                                             }`}
                                         >
                                             {data.status === status && (
                                                 <div className="w-2 h-2 rounded-full bg-white"></div>
                                             )}
                                         </div>
-                                        <span className="text-gray-800 text-lg">
+                                        <span className="text-gray-800 text-sm">
                                             {status}
                                         </span>
                                     </label>
                                 ))}
                             </div>
                             {errors.status && (
-                                <div className="text-red-600 text-sm mt-1">
+                                <p className="text-red-500 text-sm mt-1">
                                     {errors.status}
-                                </div>
+                                </p>
                             )}
                         </div>
 
-                        {/* Submit Button */}
-                        <div className="pt-6">
+                        {/* Update Button */}
+                        <div className="pt-4">
                             <button
                                 type="submit"
                                 disabled={processing}
-                                className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-semibold py-3 px-6 rounded-md transition duration-200"
+                                className={`w-full font-semibold py-3 px-6 rounded-md transition duration-200 ${
+                                    processing
+                                        ? "bg-gray-400 cursor-not-allowed"
+                                        : "bg-blue-600 hover:bg-blue-700"
+                                } text-white`}
                             >
-                                {processing ? "Menyimpan..." : "Simpan"}
+                                {processing ? "Memperbarui..." : "Perbarui"}
                             </button>
                         </div>
 
@@ -170,6 +181,17 @@ export default function TambahMember({ divisiOptions = [], auth }) {
                             </div>
                         )}
                     </form>
+
+                    {/* Cancel Button */}
+                    <div className="mt-4">
+                        <button
+                            onClick={handleCancel}
+                            type="button"
+                            className="w-full bg-gray-400 hover:bg-gray-500 text-white font-semibold py-2 px-6 rounded-md transition duration-200"
+                        >
+                            Batal
+                        </button>
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

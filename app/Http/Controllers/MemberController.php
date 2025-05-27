@@ -14,15 +14,33 @@ class MemberController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        $members = Member::with('divisi')->latest()->paginate(10);
+    public function index(Request $request)
+{
+    $query = Member::with('divisi')->latest();
+    
+    $searchQuery = $request->get('q');
+    
+    if ($searchQuery) {
+        // Search across all relevant fields
+        $query->where(function ($q) use ($searchQuery) {
+            $q->where('nama_member', 'like', '%' . $searchQuery . '%')
+              ->orWhere('status', 'like', '%' . $searchQuery . '%')
+              ->orWhereHas('divisi', function ($divisiQuery) use ($searchQuery) {
+                  $divisiQuery->where('nama_divisi', 'like', '%' . $searchQuery . '%');
+              });
+        });
         
-        return Inertia::render('Member/Member', [
-            'members' => $members,
-            'flash' => session('flash')
-        ]);
+        $members = $query->paginate(50); // Increase limit for search results
+    } else {
+        $members = $query->paginate(10);
     }
+    
+    return Inertia::render('Member/Member', [
+        'members' => $members,
+        'flash' => session('flash'),
+        'search' => $searchQuery
+    ]);
+}
 
     /**
      * Show the form for creating a new resource.
@@ -124,7 +142,7 @@ class MemberController extends Controller
                                   ];
                               });
 
-        return Inertia::render('Member/Edit', [
+        return Inertia::render('Member/EditMember', [
             'member' => $member,
             'divisiOptions' => $divisiOptions
         ]);

@@ -10,16 +10,28 @@ use Illuminate\Validation\ValidationException;
 
 class DivisiController extends Controller
 {
-    /**
-     * Display a listing of the divisi.
-     */
-    public function index()
+    
+
+    public function index(Request $request)
     {
-        $divisi = Divisi::withCount('admins')->get();
-        
+        $query = Divisi::withCount('admins');
+    
+        $searchQuery = $request->get('q');
+    
+        if ($searchQuery) {
+        // Search across relevant fields
+            $query->where(function ($q) use ($searchQuery) {
+                $q->where('nama_divisi', 'like', '%' . $searchQuery . '%')
+                ->orWhere('deskripsi', 'like', '%' . $searchQuery . '%');
+            });
+        }
+    
+        $divisi = $query->get();
+    
         return Inertia::render('Divisi/Divisi', [
             'divisi' => $divisi,
-            'flash' => session('flash')
+            'flash' => session('flash'),
+            'search' => $searchQuery
         ]);
     }
 
@@ -38,7 +50,7 @@ class DivisiController extends Controller
 {
     try {
         $validated = $request->validate([
-            'namaDivisi' => 'required|string|max:255|unique:divisis,nama_divisi', // Pastikan nama tabel benar
+            'namaDivisi' => 'required|string|max:255|unique:divisis,nama_divisi',
             'deskripsiDivisi' => 'required|string|max:1000',
         ], [
             'namaDivisi.required' => 'Nama Divisi harus diisi',
@@ -98,7 +110,7 @@ class DivisiController extends Controller
      */
     public function edit(Divisi $divisi)
     {
-        return Inertia::render('Divisi/Edit', [
+        return Inertia::render('Divisi/EditDivisi', [
             'divisi' => $divisi
         ]);
     }
@@ -110,7 +122,7 @@ class DivisiController extends Controller
     {
         try {
             $validated = $request->validate([
-                'namaDivisi' => 'required|string|max:255|unique:divisi,nama_divisi,' . $divisi->id,
+                'namaDivisi' => 'required|string|max:255|unique:divisis,nama_divisi,' . $divisi->id,
                 'deskripsiDivisi' => 'required|string|max:1000',
             ], [
                 'namaDivisi.required' => 'Nama Divisi harus diisi',
@@ -122,7 +134,7 @@ class DivisiController extends Controller
 
             $divisi->update([
                 'nama_divisi' => $validated['namaDivisi'],
-                'deskripsi_divisi' => $validated['deskripsiDivisi'],
+                'deskripsi' => $validated['deskripsiDivisi'],
             ]);
 
             return redirect()->route('divisi.index')->with('flash', [
@@ -131,10 +143,14 @@ class DivisiController extends Controller
             ]);
 
         } catch (ValidationException $e) {
+            \Log::error('Update Error:', ['message' => $e->getMessage()]);
+
             return redirect()->back()
                 ->withErrors($e->errors())
                 ->withInput();
         } catch (\Exception $e) {
+            \Log::error('Update Error:', ['message' => $e->getMessage()]);
+
             return redirect()->back()->with('flash', [
                 'type' => 'error',
                 'message' => 'Terjadi kesalahan saat memperbarui data divisi.'

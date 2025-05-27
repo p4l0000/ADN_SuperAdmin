@@ -2,10 +2,10 @@ import { useForm } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { router } from "@inertiajs/react";
 
-export default function TambahDivisi({ onCancel = null, flash = null }) {
-    const { data, setData, post, processing, errors, reset } = useForm({
-        namaDivisi: "",
-        deskripsiDivisi: "",
+export default function EditDivisi({ divisi, flash = null }) {
+    const { data, setData, put, processing, errors, reset } = useForm({
+        namaDivisi: divisi?.nama_divisi || "",
+        deskripsiDivisi: divisi?.deskripsi || "",
     });
 
     const handleInputChange = (e) => {
@@ -16,10 +16,10 @@ export default function TambahDivisi({ onCancel = null, flash = null }) {
     const handleSubmit = (e) => {
         e.preventDefault();
 
-        post(route("divisi.store"), {
+        put(route("divisi.update", divisi.id), {
+            preserveScroll: true,
             onSuccess: () => {
-                console.log("berhasil");
-                reset();
+                console.log("Divisi berhasil diperbarui");
             },
             onError: (errors) => {
                 console.log("Validation errors:", errors);
@@ -28,34 +28,30 @@ export default function TambahDivisi({ onCancel = null, flash = null }) {
     };
 
     const handleCancel = () => {
-        if (onCancel) {
-            onCancel();
-        } else {
-            router.visit(route("divisi.index"));
-        }
+        router.visit(route("divisi.index"));
     };
 
     return (
         <AuthenticatedLayout
             header={
                 <h2 className="font-semibold text-xl text-gray-800 leading-tight">
-                    Tambah Divisi
+                    Edit Divisi
                 </h2>
             }
         >
             <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-                <div className="bg-green-100 rounded-2xl p-8 w-full max-w-md shadow-lg">
+                <div className="bg-blue-100 rounded-2xl p-8 w-full max-w-md shadow-lg">
                     <div className="flex items-center justify-between mb-8">
-                        <h1 className="text-2xl font-bold text-green-900">
-                            Tambah Divisi
+                        <h1 className="text-2xl font-bold text-blue-900">
+                            Edit Divisi
                         </h1>
                         {processing && (
-                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-900"></div>
+                            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-900"></div>
                         )}
                     </div>
 
                     {/* Flash Message */}
-                    {flash && (
+                    {flash && flash.message && (
                         <div
                             className={`mb-6 p-4 rounded-md ${
                                 flash.type === "success"
@@ -72,7 +68,7 @@ export default function TambahDivisi({ onCancel = null, flash = null }) {
                         <div>
                             <label
                                 htmlFor="namaDivisi"
-                                className="block text-base font-semibold text-green-900 mb-2"
+                                className="block text-base font-semibold text-blue-900 mb-2"
                             >
                                 Nama Divisi{" "}
                                 <span className="text-red-500">*</span>
@@ -83,12 +79,12 @@ export default function TambahDivisi({ onCancel = null, flash = null }) {
                                 name="namaDivisi"
                                 value={data.namaDivisi}
                                 onChange={handleInputChange}
-                                placeholder="Contoh: DKI Jakarta"
+                                placeholder="Contoh: Divisi IT"
                                 disabled={processing}
                                 className={`w-full px-0 py-2 text-gray-800 bg-transparent border-0 border-b-2 focus:outline-none placeholder-gray-600 transition-colors ${
                                     errors.namaDivisi
                                         ? "border-red-500 focus:border-red-600"
-                                        : "border-gray-700 focus:border-green-600"
+                                        : "border-gray-700 focus:border-blue-600"
                                 } ${
                                     processing
                                         ? "opacity-50 cursor-not-allowed"
@@ -117,7 +113,7 @@ export default function TambahDivisi({ onCancel = null, flash = null }) {
                         <div>
                             <label
                                 htmlFor="deskripsiDivisi"
-                                className="block text-base font-semibold text-green-900 mb-2"
+                                className="block text-base font-semibold text-blue-900 mb-2"
                             >
                                 Deskripsi Divisi{" "}
                                 <span className="text-red-500">*</span>
@@ -133,7 +129,7 @@ export default function TambahDivisi({ onCancel = null, flash = null }) {
                                 className={`w-full px-3 py-2 text-gray-800 bg-white border-2 rounded-md focus:outline-none placeholder-gray-500 resize-none transition-colors ${
                                     errors.deskripsiDivisi
                                         ? "border-red-500 focus:border-red-600"
-                                        : "border-gray-300 focus:border-green-600"
+                                        : "border-gray-300 focus:border-blue-600"
                                 } ${
                                     processing
                                         ? "opacity-50 cursor-not-allowed"
@@ -158,24 +154,24 @@ export default function TambahDivisi({ onCancel = null, flash = null }) {
                             )}
                         </div>
 
-                        {/* Tombol Simpan */}
+                        {/* Tombol Perbarui */}
                         <div className="pt-4">
                             <button
                                 type="submit"
                                 disabled={processing}
                                 className={`w-full font-semibold py-3 px-6 rounded-md transition duration-200 flex items-center justify-center ${
                                     processing
-                                        ? "bg-gray-400 cursor-not-allowed"
-                                        : "bg-green-600 hover:bg-green-700 text-white"
+                                        ? "bg-gray-400 cursor-not-allowed text-white"
+                                        : "bg-blue-600 hover:bg-blue-700 text-white"
                                 }`}
                             >
                                 {processing ? (
                                     <>
                                         <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                                        Menyimpan...
+                                        Memperbarui...
                                     </>
                                 ) : (
-                                    "Simpan"
+                                    "Perbarui"
                                 )}
                             </button>
                         </div>
