@@ -154,7 +154,8 @@ export default function AuthenticatedLayout({ header, children }) {
                                     href={route("admin.index")}
                                     active={
                                         route().current("admin.index") ||
-                                        route().current("admin.create")
+                                        route().current("admin.create") ||
+                                        route().current("admin.edit")
                                     }
                                 >
                                     <div className="flex items-center px-4 py-3 hover:bg-gray-100">
@@ -167,7 +168,8 @@ export default function AuthenticatedLayout({ header, children }) {
                                     href={route("divisi.index")}
                                     active={
                                         route().current("divisi.index") ||
-                                        route().current("divisi.create")
+                                        route().current("divisi.create") ||
+                                        route().current("divisi.edit")
                                     }
                                 >
                                     <div className="flex items-center px-4 py-3 hover:bg-gray-100">
@@ -180,7 +182,8 @@ export default function AuthenticatedLayout({ header, children }) {
                                     href={route("member.index")}
                                     active={
                                         route().current("member.index") ||
-                                        route().current("member.create")
+                                        route().current("member.create") ||
+                                        route().current("member.edit")
                                     }
                                 >
                                     <div className="flex items-center px-4 py-3 hover:bg-gray-100">
@@ -193,7 +196,8 @@ export default function AuthenticatedLayout({ header, children }) {
                                     href={route("berita.index")}
                                     active={
                                         route().current("berita.index") ||
-                                        route().current("berita.create")
+                                        route().current("berita.create") ||
+                                        route().current("berita.edit")
                                     }
                                 >
                                     <div className="flex items-center px-4 py-3 hover:bg-gray-100">
@@ -203,8 +207,8 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </NavLink>
 
                                 <NavLink
-                                // href={route("jurnal")}
-                                // active={route().current("jurnal")}
+                                    href={route("jurnal.index")}
+                                    active={route().current("jurnal.index")}
                                 >
                                     <div className="flex items-center px-4 py-3 hover:bg-gray-100">
                                         <FaBook className="mr-3 text-gray-600" />
@@ -213,8 +217,8 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </NavLink>
 
                                 <NavLink
-                                // href={route("situs-halaman")}
-                                // active={route().current("situs-halaman")}
+                                    href={route("edit.halaman")}
+                                    active={route().current("edit.halaman")}
                                 >
                                     <div className="flex items-center px-4 py-3 hover:bg-gray-100">
                                         <FaFileAlt className="mr-3 text-gray-600" />

@@ -19,7 +19,7 @@ export default function Dashboard() {
                         {stats.map((stat, index) => (
                             <div
                                 key={index}
-                                className={`${stat.color} rounded-lg p-4 text-white shadow-md items-center h-32`}
+                                className={`${stat.color} rounded-lg p-4 text-white shadow-md items-center h-32 bg-green-600`}
                             >
                                 <div className="text-3xl">
                                     {stat.icon === "user" && <FaUser />}
